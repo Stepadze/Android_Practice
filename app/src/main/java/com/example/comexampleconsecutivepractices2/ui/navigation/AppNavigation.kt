@@ -3,6 +3,7 @@ package com.example.consecutivepractices.ui.navigation
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -19,12 +20,15 @@ import androidx.navigation.compose.rememberNavController
 import com.example.consecutivepractices.ui.favorites.FavoritesScreen
 import com.example.consecutivepractices.ui.films.FilmApp
 import com.example.consecutivepractices.ui.films.FilmsViewModel
+import com.example.consecutivepractices.ui.profile.EditProfileScreen
+import com.example.consecutivepractices.ui.profile.ProfileScreen
 import com.example.consecutivepractices.ui.settings.SettingsScreen
 import org.koin.androidx.compose.koinViewModel
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
     object Films : Screen("films", "Фильмы", Icons.AutoMirrored.Filled.List)
     object Favorites : Screen("favorites", "Избранное", Icons.Default.Favorite)
+    object Profile : Screen("profile", "Профиль", Icons.Default.Person)
     object Settings : Screen("settings", "Настройки", Icons.Default.Settings)
 }
 
@@ -38,7 +42,7 @@ fun AppNavigation() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    val screens = listOf(Screen.Films, Screen.Favorites, Screen.Settings)
+    val screens = listOf(Screen.Films, Screen.Favorites, Screen.Profile, Screen.Settings)
 
     Scaffold(
         bottomBar = {
@@ -84,8 +88,22 @@ fun AppNavigation() {
             composable(Screen.Favorites.route) {
                 FavoritesScreen(
                     onFilmClick = { imdbId ->
-                        // Здесь можно добавить навигацию на детали фильма
+                        // Навигация на детали фильма
                     }
+                )
+            }
+
+            composable(Screen.Profile.route) {
+                ProfileScreen(
+                    onEditClick = {
+                        navController.navigate("edit_profile")
+                    }
+                )
+            }
+
+            composable("edit_profile") {
+                EditProfileScreen(
+                    onBack = { navController.popBackStack() }
                 )
             }
 
