@@ -1,4 +1,4 @@
-package com.example.course_mob
+package com.example.comexampleconsecutivepractices2
 
 import org.junit.Test
 
