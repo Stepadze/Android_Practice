@@ -1,4 +1,4 @@
-package com.example.course_mob
+package com.example.practice3final
 
 import org.junit.Test
 
