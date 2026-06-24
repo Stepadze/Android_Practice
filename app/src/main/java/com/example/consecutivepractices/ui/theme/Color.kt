@@ -1,4 +1,4 @@
-package com.example.course_mob.ui.theme
+package com.example.consecutivepractices.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
