@@ -44,39 +44,34 @@ fun FilmsListScreen(
     var isTypeMenuExpanded by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Фон или другие элементы на заднем плане (опционально)
+        // Фон
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(color = MaterialTheme.colorScheme.surface)
         )
 
-        // Панель фильтров (располагается сверху)
+        // Панель фильтров (по центру сверху)
         Column(
             modifier = Modifier
                 .padding(16.dp)
                 .align(Alignment.TopCenter)
                 .width(320.dp) // фиксированная ширина
-                .padding(top = 80.dp)
+                .padding(top = 30.dp)
         ) {
+            // Поле поиска
             OutlinedTextField(
                 value = textFieldValue,
                 onValueChange = { textFieldValue = it },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                 label = { Text("Поиск") },
-                trailingIcon = {
-                    IconButton(onClick = {
-                        viewModel.searchFilms(textFieldValue, searchType, searchYear)
-                    }) {
-                        Icon(Icons.Default.Search, contentDescription = "Поиск")
-                    }
-                },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(
                     onSearch = { viewModel.searchFilms(textFieldValue, searchType, searchYear) }
                 )
             )
 
+            // Выпадающий список типов
             DropdownMenu(
                 expanded = isTypeMenuExpanded,
                 onDismissRequest = { isTypeMenuExpanded = false }
@@ -91,7 +86,6 @@ fun FilmsListScreen(
                     )
                 }
             }
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -99,7 +93,8 @@ fun FilmsListScreen(
                 Text("Тип:", modifier = Modifier.weight(1f))
                 Surface(
                     modifier = Modifier.clickable { isTypeMenuExpanded = !isTypeMenuExpanded },
-                    shape = MaterialTheme.shapes.medium
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surface
                 ) {
                     Row(
                         modifier = Modifier.padding(8.dp),
@@ -108,22 +103,34 @@ fun FilmsListScreen(
                         Text(searchType, modifier = Modifier.weight(1f))
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = "Развернуть список типов",
-                            modifier = Modifier.clickable { isTypeMenuExpanded = !isTypeMenuExpanded }
+                            contentDescription = "Развернуть список типов"
                         )
                     }
                 }
             }
 
+            // Поле года выпуска
             OutlinedTextField(
                 value = searchYear,
                 onValueChange = { viewModel._searchYear.value = it },
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 5.dp),
                 label = { Text("Год выпуска") }
             )
+
+            // ОТДЕЛЬНАЯ КНОПКА ПОИСКА — СНИЗУ ПОСЛЕ ПОЛЯ ГОДА
+            Button(
+                onClick = {
+                    viewModel.searchFilms(textFieldValue, searchType, searchYear)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+            ) {
+                Text("Найти")
+            }
         }
 
-        // Список фильмов (должен быть поверх фильтров)
+        // Список фильмов (по центру под фильтрами)
         when (val state = uiState) {
             is FilmsUiState.Loading -> {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -151,7 +158,7 @@ fun FilmsListScreen(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(top = 200.dp) // отступ сверху, чтобы не перекрывался панелью фильтров
+                        .padding(top = 370.dp, start = 16.dp, end = 16.dp) // отступ сверху под фильтры и кнопку поиска
                 ) {
                     items(state.films) { film ->
                         FilmItem(film = film, onClick = { onFilmClick(film.imdbId) })
@@ -162,6 +169,7 @@ fun FilmsListScreen(
         }
     }
 }
+
 
 
 @Composable
