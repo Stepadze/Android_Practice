@@ -7,8 +7,8 @@ import com.example.consecutivepractices.domain.repository.FilmRepository
 
 class FilmRepositoryImpl(private val api: OmdbApi) : FilmRepository {
 
-    override suspend fun searchFilms(query: String): List<FilmShort> {
-        val response = api.searchFilms(query)
+    override suspend fun searchFilms(query: String, type: String, year: String): List<FilmShort> {
+        val response = api.searchFilms(query = query, type = type, year = year)
         if (response.response == "False") {
             throw Exception(response.error ?: "Ничего не найдено")
         }

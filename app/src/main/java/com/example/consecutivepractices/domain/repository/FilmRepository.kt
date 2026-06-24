@@ -4,6 +4,6 @@ import com.example.consecutivepractices.domain.model.Film
 import com.example.consecutivepractices.domain.model.FilmShort
 
 interface FilmRepository {
-    suspend fun searchFilms(query: String): List<FilmShort>
+    suspend fun searchFilms(query: String, type: String, year: String): List<FilmShort>
     suspend fun getFilmById(imdbId: String): Film
 }

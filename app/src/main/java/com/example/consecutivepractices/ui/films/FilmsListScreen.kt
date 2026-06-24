@@ -18,6 +18,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.consecutivepractices.domain.model.FilmShort
 import org.koin.androidx.compose.koinViewModel
+import com.example.consecutivepractices.data.database.FavoriteFilmEntity
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.background
+
+
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,71 +37,132 @@ fun FilmsListScreen(
 ) {
     val uiState by viewModel.filmsState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
-    var textFieldValue by remember { mutableStateOf(searchQuery) }
+    val searchType by viewModel.searchType.collectAsState()
+    val searchYear by viewModel.searchYear.collectAsState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("Фильмы") })
-        }
-    ) { padding ->
-        Column(
+    var textFieldValue by remember { mutableStateOf(searchQuery) }
+    var isTypeMenuExpanded by remember { mutableStateOf(false) }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Фон или другие элементы на заднем плане (опционально)
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .background(color = MaterialTheme.colorScheme.surface)
+        )
+
+        // Панель фильтров (располагается сверху)
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .align(Alignment.TopCenter)
+                .width(320.dp) // фиксированная ширина
+                .padding(top = 80.dp)
         ) {
-            // Строка поиска
             OutlinedTextField(
                 value = textFieldValue,
                 onValueChange = { textFieldValue = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text("Поиск фильмов...") },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Поиск") },
                 trailingIcon = {
-                    IconButton(onClick = { viewModel.searchFilms(textFieldValue) }) {
+                    IconButton(onClick = {
+                        viewModel.searchFilms(textFieldValue, searchType, searchYear)
+                    }) {
                         Icon(Icons.Default.Search, contentDescription = "Поиск")
                     }
                 },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(
-                    onSearch = { viewModel.searchFilms(textFieldValue) }
-                ),
-                singleLine = true
+                    onSearch = { viewModel.searchFilms(textFieldValue, searchType, searchYear) }
+                )
             )
 
-            when (val state = uiState) {
-                is FilmsUiState.Loading -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+            DropdownMenu(
+                expanded = isTypeMenuExpanded,
+                onDismissRequest = { isTypeMenuExpanded = false }
+            ) {
+                listOf("movie", "series").forEach { type ->
+                    DropdownMenuItem(
+                        text = { Text(type) },
+                        onClick = {
+                            viewModel._searchType.value = type
+                            isTypeMenuExpanded = false
+                        }
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Тип:", modifier = Modifier.weight(1f))
+                Surface(
+                    modifier = Modifier.clickable { isTypeMenuExpanded = !isTypeMenuExpanded },
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Row(
+                        modifier = Modifier.padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(searchType, modifier = Modifier.weight(1f))
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Развернуть список типов",
+                            modifier = Modifier.clickable { isTypeMenuExpanded = !isTypeMenuExpanded }
+                        )
                     }
                 }
-                is FilmsUiState.Error -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = "Ошибка: ${state.message}",
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Button(onClick = { viewModel.searchFilms(textFieldValue) }) {
-                                Text("Повторить")
-                            }
+            }
+
+            OutlinedTextField(
+                value = searchYear,
+                onValueChange = { viewModel._searchYear.value = it },
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                label = { Text("Год выпуска") }
+            )
+        }
+
+        // Список фильмов (должен быть поверх фильтров)
+        when (val state = uiState) {
+            is FilmsUiState.Loading -> {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            is FilmsUiState.Error -> {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "Ошибка: ${state.message}",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = {
+                            viewModel.searchFilms(textFieldValue, searchType, searchYear)
+                        }) {
+                            Text("Повторить")
                         }
                     }
                 }
-                is FilmsUiState.Success -> {
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        items(state.films) { film ->
-                            FilmItem(film = film, onClick = { onFilmClick(film.imdbId) })
-                            HorizontalDivider()
-                        }
+            }
+            is FilmsUiState.Success -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 200.dp) // отступ сверху, чтобы не перекрывался панелью фильтров
+                ) {
+                    items(state.films) { film ->
+                        FilmItem(film = film, onClick = { onFilmClick(film.imdbId) })
+                        HorizontalDivider()
                     }
                 }
             }
         }
     }
 }
+
 
 @Composable
 fun FilmItem(film: FilmShort, onClick: () -> Unit) {

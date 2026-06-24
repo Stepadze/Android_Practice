@@ -3,7 +3,6 @@ package com.example.consecutivepractices.ui.films
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.consecutivepractices.data.database.FavoriteFilmDao
-import com.example.consecutivepractices.data.database.FavoriteFilmEntity
 import com.example.consecutivepractices.data.preferences.SearchPreferences
 import com.example.consecutivepractices.domain.cache.FilterBadgeCache
 import com.example.consecutivepractices.domain.model.Film
@@ -12,6 +11,8 @@ import com.example.consecutivepractices.domain.usecase.GetFilmByIdUseCase
 import com.example.consecutivepractices.domain.usecase.SearchFilmsUseCase
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import com.example.consecutivepractices.data.database.FavoriteFilmEntity
+
 
 sealed class FilmsUiState {
     object Loading : FilmsUiState()
@@ -41,20 +42,29 @@ class FilmsViewModel(
     private val _searchQuery = MutableStateFlow("Batman")
     val searchQuery: StateFlow<String> = _searchQuery
 
+    val _searchType = MutableStateFlow("movie") // инициализация
+    val _searchYear = MutableStateFlow("") // инициализация
+    // Публичные свойства для фильтров
+    val searchType: StateFlow<String> = _searchType
+    val searchYear: StateFlow<String> = _searchYear
+
     private val _showBadge = MutableStateFlow(false)
     val showBadge: StateFlow<Boolean> = _showBadge
 
     init {
-        searchFilms("Batman")
+        searchFilms("Batman", "movie", "")
         _showBadge.value = filterBadgeCache.getHasActiveFilters()
     }
 
-    fun searchFilms(query: String) {
+    fun searchFilms(query: String, type: String, year: String) {
         _searchQuery.value = query
+        _searchType.value = type
+        _searchYear.value = year
         _filmsState.value = FilmsUiState.Loading
+
         viewModelScope.launch {
             try {
-                val films = searchFilmsUseCase(query)
+                val films = searchFilmsUseCase(query, type, year)
                 _filmsState.value = FilmsUiState.Success(films)
             } catch (e: Exception) {
                 _filmsState.value = FilmsUiState.Error(e.message ?: "Неизвестная ошибка")

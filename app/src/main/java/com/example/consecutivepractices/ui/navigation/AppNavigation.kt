@@ -120,7 +120,7 @@ fun AppNavigation() {
             composable(BottomNavItem.Settings.route) {
                 SettingsScreen(
                     onApply = { query ->
-                        filmsViewModel.searchFilms(query)
+                        filmsViewModel.searchFilms(query, "", "")
                         filmsViewModel.updateBadge()
                         navController.navigate(BottomNavItem.Films.route) {
                             popUpTo(navController.graph.findStartDestination().id) {
